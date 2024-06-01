@@ -15,6 +15,8 @@ import subprocess
 import json
 import requests
 
+os.system("cp main.py /bin/loctrac && chmod +x /bin/loctrac")
+
 # Function to check if a command is available
 def command_exists(command):
     return subprocess.run(['command', '-v', command], stdout=subprocess.PIPE, shell=True).returncode == 0
