@@ -53,7 +53,7 @@ def get_ip_info(ip_address):
 
 # Check if the IP address is provided
 if len(sys.argv) != 2:
-    print("Usage: python3 program.py <ip>")
+    print("Usage: loctrac <ip>")
     sys.exit(1)
 
 ip = sys.argv[1]
