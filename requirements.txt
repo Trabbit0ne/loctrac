@@ -1,0 +1,5 @@
+# NEEDED INSTALLATIONS
+#-------------------------
+geocoder
+folium
+requests
