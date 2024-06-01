@@ -13,9 +13,11 @@ COMPATIBLES DISTROS:
 ``
 git clone https://github.com/PENTAGONE-GROUP/loctrac.git
 ``
+
 ``
 cd loctrac | chmod +x main.py
 ``
+
 ``
 pip3 install -r requirements.txt | python3 main.py
 ``
