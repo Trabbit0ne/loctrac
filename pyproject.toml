@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loctrac"
+version = "0.1.0"
+description = "A tool for tracking and locating items"
+authors = [
+    { name = "PENTAGONE-GROUP", email = "info@pentagone-group.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["tracking", "location", "tool"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "requests>=2.25.1",
+    "flask>=2.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/PENTAGONE-GROUP/loctrac"
