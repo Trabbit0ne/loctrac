@@ -11,7 +11,7 @@ software developement institut.
 ## LOCTRAC SOFTWARE INSTALLATION
 
 COMPATIBLES DISTROS:
-- Linux (Ubuntu, Kali Linux, Debian)
+- Linux (Kali Linux)
 
 ``
 git clone https://github.com/PENTAGONE-GROUP/loctrac.git
