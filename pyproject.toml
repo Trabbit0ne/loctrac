@@ -20,8 +20,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "requests>=2.25.1",
-    "flask>=2.0.1",
+    "folium",
+    "geocoder",
+    "requests",
 ]
 
 [project.urls]
