@@ -11,20 +11,29 @@ import folium
 import os
 import time
 import sys
+import shutil
 import subprocess
 import json
 import requests
 
 os.system("cp main.py /bin/loctrac && chmod +x /bin/loctrac")
 
+directory = '/usr/loctrac/saves/'
+
+if not os.path.exists(directory):
+    os.makedirs(directory)
+    print(f"Directory '{directory}' created.")
+else:
+    print(f"Directory '{directory}' already exists. Skipping creation.")
+
 # Function to check if a command is available
 def command_exists(command):
-    return subprocess.run(['command', '-v', command], stdout=subprocess.PIPE, shell=True).returncode == 0
+    return shutil.which(command) is not None
 
 # Function to install a package using apt-get (Linux)
 def install_package(package):
     print(f"Installing {package}...")
-    subprocess.run(['sudo', 'apt-get', 'install', '-y', package])
+    subprocess.run(['sudo', 'apt-get', 'install', '-y', package], check=True)
 
 # Check if wmctrl is available
 if not command_exists('wmctrl'):
@@ -81,7 +90,7 @@ myloc.save(filename)
 # Print IP information
 ip_info = get_ip_info(ip)
 if ip_info:
-    print("PENTAGONE GROUP - LOCTRAC SOFTWARE")
+    print("PENTAGONE GROUP ~ LOCTRAC SOFTWARE")
     print("[+]IP Address   =>   ", ip_info.get('ip', 'N/A'))
     print("[+]Country code =>   ", ip_info.get('country', 'N/A'))
     print("[+]Country      =>   ", ip_info.get('country_name', 'N/A'))
@@ -97,12 +106,13 @@ if ip_info:
     print("[+]Latitude     =>   ", ip_info.get('loc', 'N/A').split(',')[0])
     print("[+]Longitude    =>   ", ip_info.get('loc', 'N/A').split(',')[1])
     print("[+]Location     =>   ", ip_info.get('loc', 'N/A'))
-
+    print("""
+    """)
 # Move the file to saves
-os.system(f"mv {filename} saves/")
+os.system(f"mv {filename} /usr/loctrac/saves/")
 
 # Open the HTML file in Firefox
-os.system(f"firefox saves/{filename} &")
+os.system(f"firefox /usr/loctrac/saves/{filename} &")
 
 # Use wmctrl and xdotool to arrange windows
 time.sleep(2)  # Wait for Firefox to open
