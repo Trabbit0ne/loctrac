@@ -16,8 +16,10 @@ import subprocess
 import json
 import requests
 
+# Moving main file to /bin/loctrac
 os.system("cp main.py /bin/loctrac && chmod +x /bin/loctrac")
 
+# Setting saves directory
 directory = '/usr/loctrac/saves/'
 
 if not os.path.exists(directory):
