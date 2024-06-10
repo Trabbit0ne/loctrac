@@ -10,11 +10,13 @@ software developement institut.
 
 ## LOCTRAC SOFTWARE INSTALLATION
 
-COMPATIBLES DISTROS:
-- Linux (Kali Linux)
+LINUX COMPATIBLES DISTROS:
+- Kali Linux
+- ubuntu
+- Debian (untested)
 
 ``
-apt update && apt upgrade && apt install git && pt install python3-pip && apt install wmctrl && apt install xdotool && apt install firefox-esr
+apt update && apt upgrade && apt-get install git && apt-get install xdpyinfo && apt-get install xdotool && apt-get install firefox-esr && apt-get install x11-utils && apt-get install jq
 ``
 
 ``
@@ -22,14 +24,13 @@ git clone https://github.com/PENTAGONE-GROUP/loctrac.git
 ``
 
 ``
-cd loctrac | chmod +x main.py
+cd loctrac | chmod +x main.sh
 ``
 
 ``
-pip3 install -r requirements.txt | python3 main.py
+./main.sh
 ``
-
+OR
 ``
-python3 main.py
+cp main.sh /usr/bin/loctrac && chmod +x /usr/bin/loctrac
 ``
-
