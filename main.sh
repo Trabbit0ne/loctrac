@@ -1,3 +1,4 @@
+#!/bin/bash
 #----------------------------------------
 #     .:: Made by Pentagone Group ::.
 #----------------------------------------
@@ -5,6 +6,21 @@
 #----------------------------------------
 #     Location Tracking Software
 #----------------------------------------
+
+# Function to kill all previous Firefox sessions
+kill_firefox() {
+    if pgrep -x "firefox" > /dev/null; then
+        pkill firefox
+        echo "Firefox processes killed."
+    else
+        echo "No Firefox processes found."
+    fi
+}
+
+kill_firefox
+
+# Kill all previous Firefox sessions.
+kill_firefox
 
 # Ensure necessary packages are installed
 install_package() {
@@ -22,13 +38,29 @@ install_package "jq"
 # Clear the screen
 clear
 
-# Check if the IP address is provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: loctrac <ip>"
+# Function to get public IP address
+get_public_ip() {
+    curl -s https://api.ipify.org
+}
+
+# Check if the IP address or session name is provided
+if [ "$#" -lt 1 ]; then
+    echo "Usage: loctrac <ip> or loctrac -m or loctrac -s <session_name>"
     exit 1
 fi
 
-ip=$1
+if [ "$1" = "-m" ]; then
+    ip=$(get_public_ip)
+elif [ "$1" = "-s" ]; then
+    if [ "$#" -ne 2 ]; then
+        echo "Usage: loctrac -s <session_name>"
+        exit 1
+    fi
+    session_name=$2
+    ip="Session: $session_name"
+else
+    ip=$1
+fi
 
 # Get the location based on IP address
 location=$(curl -s "https://ipinfo.io/${ip}/json")
@@ -37,7 +69,6 @@ longitude=$(echo "$location" | jq -r '.loc' | cut -d',' -f2)
 timestamp=$(date +%s)
 filename="location_${ip}_${timestamp}.html"
 
-# Create a Folium map
 # Create a Folium map
 cat <<EOF > $filename
 <!DOCTYPE html>
@@ -63,7 +94,6 @@ cat <<EOF > $filename
 </html>
 EOF
 
-
 # Move the file to saves
 mkdir -p /etc/loctrac/saves/
 mv $filename /etc/loctrac/saves/
@@ -71,8 +101,21 @@ mv $filename /etc/loctrac/saves/
 # Open the HTML file in Firefox
 firefox /etc/loctrac/saves/$filename &
 
-# Use xdotool to arrange windows
-sleep 3.5  # Wait for Firefox to open
+# Wait for Firefox window to appear
+attempts=0
+max_attempts=20
+while true; do
+    FIREFOX_WINDOW_ID=$(xdotool search --onlyvisible --class "firefox")
+    if [ -n "$FIREFOX_WINDOW_ID" ]; then
+        break
+    fi
+    if [ "$attempts" -ge "$max_attempts" ]; then
+        echo "Firefox window did not appear. Exiting."
+        exit 1
+    fi
+    sleep 0.5  # Check every 0.5 seconds
+    attempts=$((attempts + 1))
+done
 
 # Get the screen resolution using xdpyinfo
 SCREEN_RESOLUTION=$(xdpyinfo | awk '/dimensions:/ {print $2}')
@@ -89,7 +132,6 @@ get_window_id() {
 }
 
 TERMINAL_WINDOW_ID=$(get_window_id "gnome-terminal")
-FIREFOX_WINDOW_ID=$(get_window_id "firefox")
 
 # Move and resize windows using xdotool
 if [ -n "$TERMINAL_WINDOW_ID" ]; then
@@ -123,3 +165,11 @@ echo "[+] Latitude     => $latitude"
 echo "[+] Longitude    => $longitude"
 echo "[+] Location     => $(echo "$location" | jq -r '.loc')"
 echo
+read -p "Press Enter To Continue & Exit The Map GUI/UI..."
+clear
+kill_firefox
+clear
+echo "Session $ip Terminated."
+sleep 1
+clear
+exit 0
