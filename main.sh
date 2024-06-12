@@ -59,16 +59,77 @@ get_device_type() {
     echo "$device_type"
 }
 
+# Function to perform deeper IP analysis
+perform_deeper_analysis() {
+    local ip=$1
+
+    echo "Deeper IP Analysis for ${ip}:"
+    echo
+
+    # Reverse DNS Lookup
+    echo "[+] Reverse DNS Lookup:"
+    host "${ip}"
+
+    # WHOIS Information
+    echo
+    echo "[+] WHOIS Information:"
+    whois "${ip}"
+}
+
 # Check if the IP address is provided
 if [ "$#" -lt 1 ]; then
-    echo "Usage: loctrac <ip> or loctrac -m"
+    echo "Usage: loctrac <ip> or loctrac -m [options]"
+    echo "Options:"
+    echo "  -m        : Track your own public IP"
+    echo "  -d        : Perform deeper IP analysis"
+    echo "  -t <timeout> : Specify a timeout for traceroute (in seconds)"
+    echo "  -r <max_hops> : Specify maximum number of hops for traceroute"
+    echo "  -h        : Show help and usage information"
     exit 1
 fi
 
-if [ "$1" = "-m" ]; then
-    ip=$(get_public_ip)
-else
-    ip=$1
+# Parse arguments
+timeout=""
+max_hops=""
+perform_deeper=""
+ip=""
+
+while getopts ":mhdr:t:" option; do
+    case $option in
+        m)
+            ip=$(get_public_ip)
+            ;;
+        d)
+            perform_deeper="true"
+            ;;
+        t)
+            timeout="$OPTARG"
+            ;;
+        r)
+            max_hops="$OPTARG"
+            ;;
+        h | *)
+            echo "Usage: loctrac <ip> or loctrac -m [options]"
+            echo "Options:"
+            echo "  -m        : Track your own public IP"
+            echo "  -d        : Perform deeper IP analysis"
+            echo "  -t <timeout> : Specify a timeout for traceroute (in seconds)"
+            echo "  -r <max_hops> : Specify maximum number of hops for traceroute"
+            echo "  -h        : Show help and usage information"
+            exit 1
+            ;;
+    esac
+done
+
+shift $((OPTIND - 1))
+
+if [ -z "$ip" ]; then
+    ip="$1"
+fi
+
+# Perform deeper analysis if requested
+if [ -n "$perform_deeper" ]; then
+    perform_deeper_analysis "$ip"
 fi
 
 # Get the location based on IP address using IP-API
@@ -185,7 +246,7 @@ echo "[+] ASN          => $(echo "$location_ipapi" | jq -r '.as')"
 echo "[+] Latitude     => $latitude"
 echo "[+] Longitude    => $longitude"
 echo "[+] Location     => $latitude,$longitude"
-echo "[+] Device type  => $device_type"
+echo "[+] Device Type  => $device_type"
 echo
 read -p "Press Enter To Continue & Exit The Map GUI/UI..."
 clear
