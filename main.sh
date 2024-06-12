@@ -19,9 +19,6 @@ kill_firefox() {
 
 kill_firefox
 
-# Kill all previous Firefox sessions.
-kill_firefox
-
 # Ensure necessary packages are installed
 install_package() {
     if ! command -v "$1" &> /dev/null; then
@@ -43,29 +40,32 @@ get_public_ip() {
     curl -s https://api.ipify.org
 }
 
-# Check if the IP address or session name is provided
+# Check if the IP address is provided
 if [ "$#" -lt 1 ]; then
-    echo "Usage: loctrac <ip> or loctrac -m or loctrac -s <session_name>"
+    echo "Usage: loctrac <ip> or loctrac -m"
     exit 1
 fi
 
 if [ "$1" = "-m" ]; then
     ip=$(get_public_ip)
-elif [ "$1" = "-s" ]; then
-    if [ "$#" -ne 2 ]; then
-        echo "Usage: loctrac -s <session_name>"
-        exit 1
-    fi
-    session_name=$2
-    ip="Session: $session_name"
 else
     ip=$1
 fi
 
-# Get the location based on IP address
-location=$(curl -s "https://ipinfo.io/${ip}/json")
-latitude=$(echo "$location" | jq -r '.loc' | cut -d',' -f1)
-longitude=$(echo "$location" | jq -r '.loc' | cut -d',' -f2)
+# Get the location based on IP address using IP-API
+location_ipapi=$(curl -s "http://ip-api.com/json/${ip}")
+latitude=$(echo "$location_ipapi" | jq -r '.lat')
+longitude=$(echo "$location_ipapi" | jq -r '.lon')
+
+# Get the zip code using ipinfo.io
+location_ipinfo=$(curl -s "https://ipinfo.io/${ip}/json")
+zip_code=$(echo "$location_ipinfo" | jq -r '.postal')
+
+# Further check if the zip code is null or empty, set a default message
+if [ "$zip_code" = "null" ] || [ -z "$zip_code" ]; then
+    zip_code="Unavailable"
+fi
+
 timestamp=$(date +%s)
 filename="location_${ip}_${timestamp}.html"
 
@@ -149,21 +149,20 @@ fi
 
 # Print IP information
 echo "PENTAGONE GROUP - LOCTRAC SOFTWARE"
-echo "[+] IP Address   => $(echo "$location" | jq -r '.ip')"
-echo "[+] Country code => $(echo "$location" | jq -r '.country')"
-echo "[+] Country      => $(echo "$location" | jq -r '.country_name')"
+echo "[+] IP Address   => $(echo "$location_ipapi" | jq -r '.query')"
+echo "[+] Country      => $(echo "$location_ipapi" | jq -r '.country')"
 echo "[+] Date & Time  => $(date +'%Y-%m-%d %H:%M:%S')"
-echo "[+] Region code  => $(echo "$location" | jq -r '.region')"
-echo "[+] Region       => $(echo "$location" | jq -r '.region_name')"
-echo "[+] City         => $(echo "$location" | jq -r '.city')"
-echo "[+] Zip code     => $(echo "$location" | jq -r '.postal')"
-echo "[+] Time zone    => $(echo "$location" | jq -r '.timezone')"
-echo "[+] ISP          => $(echo "$location" | jq -r '.org')"
-echo "[+] Organization => $(echo "$location" | jq -r '.org_name')"
-echo "[+] ASN          => $(echo "$location" | jq -r '.asn')"
+echo "[+] Region code  => $(echo "$location_ipapi" | jq -r '.region')"
+echo "[+] Region       => $(echo "$location_ipapi" | jq -r '.regionName')"
+echo "[+] City         => $(echo "$location_ipapi" | jq -r '.city')"
+echo "[+] Zip code     => $zip_code"
+echo "[+] Time zone    => $(echo "$location_ipapi" | jq -r '.timezone')"
+echo "[+] ISP          => $(echo "$location_ipapi" | jq -r '.isp')"
+echo "[+] Organization => $(echo "$location_ipapi" | jq -r '.org')"
+echo "[+] ASN          => $(echo "$location_ipapi" | jq -r '.as')"
 echo "[+] Latitude     => $latitude"
 echo "[+] Longitude    => $longitude"
-echo "[+] Location     => $(echo "$location" | jq -r '.loc')"
+echo "[+] Location     => $latitude,$longitude"
 echo
 read -p "Press Enter To Continue & Exit The Map GUI/UI..."
 clear
