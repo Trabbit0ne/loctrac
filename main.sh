@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #----------------------------------------
 #     .:: Made by Pentagone Group ::.
 #----------------------------------------
@@ -17,9 +18,7 @@ kill_firefox() {
     fi
 }
 
-kill_firefox
-
-# Ensure necessary packages are installed
+# Function to install necessary packages if not installed
 install_package() {
     if ! command -v "$1" &> /dev/null; then
         sudo apt-get update
@@ -27,17 +26,37 @@ install_package() {
     fi
 }
 
+# Clear the screen
+clear
+
+# Check and install necessary packages
 install_package "xdotool"
 install_package "xdpyinfo"
 install_package "xwininfo"
 install_package "jq"
 
-# Clear the screen
-clear
-
 # Function to get public IP address
 get_public_ip() {
     curl -s https://api.ipify.org
+}
+
+# Function to perform traceroute and determine device type
+get_device_type() {
+    local ip=$1
+    local traceroute_output=$(traceroute -w 1 -q 1 -m 1 "${ip}" 2>/dev/null)
+    local device_type="Unknown"
+
+    if [[ -n "${traceroute_output}" ]]; then
+        if echo "${traceroute_output}" | grep -qiE '3g|4g|lte'; then
+            device_type="Mobile device"
+        elif echo "${traceroute_output}" | grep -qiE 'satellite'; then
+            device_type="Satellite connection"
+        else
+            device_type="Desktop or broadband connection"
+        fi
+    fi
+
+    echo "$device_type"
 }
 
 # Check if the IP address is provided
@@ -65,6 +84,9 @@ zip_code=$(echo "$location_ipinfo" | jq -r '.postal')
 if [ "$zip_code" = "null" ] || [ -z "$zip_code" ]; then
     zip_code="Unavailable"
 fi
+
+# Determine device type
+device_type=$(get_device_type "$ip")
 
 timestamp=$(date +%s)
 filename="location_${ip}_${timestamp}.html"
@@ -94,7 +116,7 @@ cat <<EOF > $filename
 </html>
 EOF
 
-# Move the file to saves
+# Move the file to saves directory
 mkdir -p /etc/loctrac/saves/
 mv $filename /etc/loctrac/saves/
 
@@ -163,6 +185,7 @@ echo "[+] ASN          => $(echo "$location_ipapi" | jq -r '.as')"
 echo "[+] Latitude     => $latitude"
 echo "[+] Longitude    => $longitude"
 echo "[+] Location     => $latitude,$longitude"
+echo "[+] Device type  => $device_type"
 echo
 read -p "Press Enter To Continue & Exit The Map GUI/UI..."
 clear
