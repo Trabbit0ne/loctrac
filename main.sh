@@ -85,6 +85,7 @@ if [ "$#" -lt 1 ]; then
     echo "  -t <timeout> : Specify a timeout for traceroute (in seconds)"
     echo "  -r <max_hops> : Specify maximum number of hops for traceroute"
     echo "  -h        : Show help and usage information"
+    echo
     exit 1
 fi
 
