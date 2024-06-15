@@ -8,6 +8,20 @@
 #     Location Tracking Software
 #----------------------------------------
 
+# Ensure key and IV lengths are correct for AES-256 encryption
+ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"  # 64 hex characters for 32 bytes
+ENCRYPTION_IV="abcdef9876543210abcdef9876543210"  # 32 hex characters for 16 bytes
+
+# Function to encrypt data
+encrypt_data() {
+    echo -n "$1" | openssl enc -aes-256-cbc -base64 -K "$ENCRYPTION_KEY" -iv "$ENCRYPTION_IV" 2>/dev/null
+}
+
+# Function to decrypt data
+decrypt_data() {
+    echo -n "$1" | openssl enc -aes-256-cbc -d -base64 -K "$ENCRYPTION_KEY" -iv "$ENCRYPTION_IV" 2>/dev/null
+}
+
 # Function to kill all previous Firefox sessions
 kill_firefox() {
     if pgrep -x "firefox" > /dev/null; then
@@ -78,44 +92,27 @@ perform_deeper_analysis() {
 
 # Check if the IP address is provided
 if [ "$#" -lt 1 ]; then
-    echo "Usage: loctrac <ip> or loctrac -m [options]"
+    echo "Usage: loctrac <ip> or loctrac -m"
     echo "Options:"
     echo "  -m        : Track your own public IP"
-    echo "  -d        : Perform deeper IP analysis"
-    echo "  -t <timeout> : Specify a timeout for traceroute (in seconds)"
-    echo "  -r <max_hops> : Specify maximum number of hops for traceroute"
     echo "  -h        : Show help and usage information"
     echo
     exit 1
 fi
 
 # Parse arguments
-timeout=""
-max_hops=""
 perform_deeper=""
 ip=""
 
-while getopts ":mhdr:t:" option; do
+while getopts ":mh" option; do
     case $option in
         m)
             ip=$(get_public_ip)
             ;;
-        d)
-            perform_deeper="true"
-            ;;
-        t)
-            timeout="$OPTARG"
-            ;;
-        r)
-            max_hops="$OPTARG"
-            ;;
         h | *)
-            echo "Usage: loctrac <ip> or loctrac -m [options]"
+            echo "Usage: loctrac <ip> or loctrac -m"
             echo "Options:"
             echo "  -m        : Track your own public IP"
-            echo "  -d        : Perform deeper IP analysis"
-            echo "  -t <timeout> : Specify a timeout for traceroute (in seconds)"
-            echo "  -r <max_hops> : Specify maximum number of hops for traceroute"
             echo "  -h        : Show help and usage information"
             exit 1
             ;;
@@ -128,18 +125,24 @@ if [ -z "$ip" ]; then
     ip="$1"
 fi
 
+# Encrypt the IP address before making requests
+encrypted_ip=$(encrypt_data "$ip")
+
+# Decrypt the IP address for further use
+decrypted_ip=$(decrypt_data "$encrypted_ip")
+
 # Perform deeper analysis if requested
 if [ -n "$perform_deeper" ]; then
-    perform_deeper_analysis "$ip"
+    perform_deeper_analysis "$decrypted_ip"
 fi
 
 # Get the location based on IP address using IP-API
-location_ipapi=$(curl -s "http://ip-api.com/json/${ip}")
+location_ipapi=$(curl -s "http://ip-api.com/json/${decrypted_ip}")
 latitude=$(echo "$location_ipapi" | jq -r '.lat')
 longitude=$(echo "$location_ipapi" | jq -r '.lon')
 
 # Get the zip code using ipinfo.io
-location_ipinfo=$(curl -s "https://ipinfo.io/${ip}/json")
+location_ipinfo=$(curl -s "https://ipinfo.io/${decrypted_ip}/json")
 zip_code=$(echo "$location_ipinfo" | jq -r '.postal')
 
 # Further check if the zip code is null or empty, set a default message
@@ -148,10 +151,10 @@ if [ "$zip_code" = "null" ] || [ -z "$zip_code" ]; then
 fi
 
 # Determine device type
-device_type=$(get_device_type "$ip")
+device_type=$(get_device_type "$decrypted_ip")
 
 timestamp=$(date +%s)
-filename="location_${ip}_${timestamp}.html"
+filename="location_${decrypted_ip}_${timestamp}.html"
 
 # Create a Folium map
 cat <<EOF > $filename
@@ -172,7 +175,7 @@ cat <<EOF > $filename
             maxZoom: 19
         }).addTo(map);
         L.marker([$latitude, $longitude], { color: 'red' }).addTo(map);
-        L.circle([$latitude, $longitude], { color: 'red', radius: 200 }).addTo(map);
+        L.circle([$latitude, $longitude], { color: 'red', radius: 500 }).addTo(map);
     </script>
 </body>
 </html>
@@ -227,15 +230,15 @@ if [ -n "$FIREFOX_WINDOW_ID" ]; then
     xdotool windowmove "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" 0
     xdotool windowsize "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" "$SCREEN_HEIGHT"
 else
-    echo "Firefox window not found"
-    exit 1
+    echo "Firefox window not found."
 fi
 
-# Print IP information
+# Display IP location information
+clear
 echo "PENTAGONE GROUP - LOCTRAC SOFTWARE"
-echo "[+] IP Address   => $(echo "$location_ipapi" | jq -r '.query')"
+echo "[+] IP Address   => $ip"
 echo "[+] Country      => $(echo "$location_ipapi" | jq -r '.country')"
-echo "[+] Date & Time  => $(date +'%Y-%m-%d %H:%M:%S')"
+echo "[+] Date & Time  => $(date '+%Y-%m-%d %H:%M:%S')"
 echo "[+] Region code  => $(echo "$location_ipapi" | jq -r '.region')"
 echo "[+] Region       => $(echo "$location_ipapi" | jq -r '.regionName')"
 echo "[+] City         => $(echo "$location_ipapi" | jq -r '.city')"
@@ -257,3 +260,4 @@ echo "Session $ip Terminated."
 sleep 1
 clear
 exit 0
+
