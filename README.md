@@ -16,7 +16,7 @@ LINUX COMPATIBLES DISTROS:
 - Debian (untested)
 
 ``
-apt update && apt upgrade && apt-get install git && apt-get install xdotool && apt-get install firefox-esr && apt-get install x11-utils && apt-get install jq
+apt update && apt upgrade && apt-get install git && apt-get install xdotool && apt-get install gnome-browser-connector && apt-get install x11-utils && apt-get install jq
 ``
 
 ``
