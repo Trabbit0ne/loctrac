@@ -8,20 +8,6 @@
 #     Location Tracking Software
 #----------------------------------------
 
-# Ensure key and IV lengths are correct for AES-256 encryption
-ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"  # 64 hex characters for 32 bytes
-ENCRYPTION_IV="abcdef9876543210abcdef9876543210"  # 32 hex characters for 16 bytes
-
-# Function to encrypt data
-encrypt_data() {
-    echo -n "$1" | openssl enc -aes-256-cbc -base64 -K "$ENCRYPTION_KEY" -iv "$ENCRYPTION_IV" 2>/dev/null
-}
-
-# Function to decrypt data
-decrypt_data() {
-    echo -n "$1" | openssl enc -aes-256-cbc -d -base64 -K "$ENCRYPTION_KEY" -iv "$ENCRYPTION_IV" 2>/dev/null
-}
-
 # Function to kill all previous Firefox sessions
 kill_firefox() {
     if pgrep -x "firefox" > /dev/null; then
@@ -54,7 +40,7 @@ get_public_ip() {
     curl -s https://api.ipify.org
 }
 
-# Function to perform traceroute and determine device type
+# Function to determine device type
 get_device_type() {
     local ip=$1
     local traceroute_output=$(traceroute -w 1 -q 1 -m 1 "${ip}" 2>/dev/null)
@@ -73,25 +59,8 @@ get_device_type() {
     echo "$device_type"
 }
 
-# Function to perform deeper IP analysis
-perform_deeper_analysis() {
-    local ip=$1
-
-    echo "Deeper IP Analysis for ${ip}:"
-    echo
-
-    # Reverse DNS Lookup
-    echo "[+] Reverse DNS Lookup:"
-    host "${ip}"
-
-    # WHOIS Information
-    echo
-    echo "[+] WHOIS Information:"
-    whois "${ip}"
-}
-
-# Check if the IP address is provided
-if [ "$#" -lt 1 ]; then
+# Function to display help
+show_help() {
     echo "        .:: Loctrac Program Usage ::.        "
     echo "---------------------------------------------"
     echo "Options:"
@@ -105,12 +74,17 @@ if [ "$#" -lt 1 ]; then
     echo "  [2. loctrac -h | loctrac ]"
     echo "  [3. loctrac -v ]"
     echo
+}
+
+# Check if the IP address is provided
+if [ "$#" -lt 1 ]; then
+    show_help
     exit 1
 fi
 
 # Parse arguments
-perform_deeper=""
 ip=""
+version="1.6"
 
 while getopts ":mhv" option; do
     case $option in
@@ -118,23 +92,10 @@ while getopts ":mhv" option; do
             ip=$(get_public_ip)
             ;;
         h)
-	    echo "        .:: Loctrac Program Usage ::.        "
-	    echo "---------------------------------------------"
-	    echo "Options:"
-	    echo "  [-m] | Track your own public IP"
-	    echo "  [-h] | Show help and usage information"
-	    echo "  [-v] | Show current version of the program"
-	    echo
-	    echo "---------------------------------------------"
-	    echo "Examples:"
-	    echo "  [1. loctrac -m ]"
-	    echo "  [2. loctrac -h | loctrac ]"
-	    echo "  [3. loctrac -v ]"
-	    echo
-	    exit 1
+            show_help
+            exit 1
             ;;
         v)
-            version="1.6"
             echo -e "\e[36mINFO\e[0m Version: $version"
             exit 1
             ;;
@@ -147,28 +108,18 @@ done
 
 shift $((OPTIND - 1))
 
+# If IP is still not set, use the provided argument
 if [ -z "$ip" ]; then
     ip="$1"
 fi
 
-# Encrypt the IP address before making requests
-encrypted_ip=$(encrypt_data "$ip")
-
-# Decrypt the IP address for further use
-decrypted_ip=$(decrypt_data "$encrypted_ip")
-
-# Perform deeper analysis if requested
-if [ -n "$perform_deeper" ]; then
-    perform_deeper_analysis "$decrypted_ip"
-fi
-
 # Get the location based on IP address using IP-API
-location_ipapi=$(curl -s "http://ip-api.com/json/${decrypted_ip}")
+location_ipapi=$(curl -s "http://ip-api.com/json/${ip}")
 latitude=$(echo "$location_ipapi" | jq -r '.lat')
 longitude=$(echo "$location_ipapi" | jq -r '.lon')
 
 # Get the zip code using ipinfo.io
-location_ipinfo=$(curl -s "https://ipinfo.io/${decrypted_ip}/json")
+location_ipinfo=$(curl -s "https://ipinfo.io/${ip}/json")
 zip_code=$(echo "$location_ipinfo" | jq -r '.postal')
 
 # Further check if the zip code is null or empty, set a default message
@@ -177,17 +128,17 @@ if [ "$zip_code" = "null" ] || [ -z "$zip_code" ]; then
 fi
 
 # Determine device type
-device_type=$(get_device_type "$decrypted_ip")
+device_type=$(get_device_type "$ip")
 
 timestamp=$(date +%s)
-filename="location_${decrypted_ip}_${timestamp}.html"
+filename="location_${ip}_${timestamp}.html"
 
 # Create a Folium map
 cat <<EOF > $filename
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Location Map</title>
+    <title>$filename</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -201,7 +152,7 @@ cat <<EOF > $filename
             maxZoom: 19
         }).addTo(map);
         L.marker([$latitude, $longitude], { color: 'blue' }).addTo(map);
-        L.circle([$latitude, $longitude], { color: 'blue', radius: 500 }).addTo(map);
+        L.circle([$latitude, $longitude], { color: 'blue', radius: 800 }).addTo(map);
     </script>
 </body>
 </html>
@@ -252,19 +203,19 @@ if [ -n "$TERMINAL_WINDOW_ID" ]; then
     xdotool windowsize "$TERMINAL_WINDOW_ID" "$HALF_SCREEN_WIDTH" "$SCREEN_HEIGHT"
 fi
 
-# Check if Firefox window is active else return error
 if [ -n "$FIREFOX_WINDOW_ID" ]; then
     xdotool windowmove "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" 0
     xdotool windowsize "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" "$SCREEN_HEIGHT"
 else
-    echo "Firefox window not found."
+    echo "Firefox window not found"
+    exit 1
 fi
 
 # Display IP location information
 clear
-echo "   |     \_|)   _   _ _|_  ,_   _,   _        "
-echo "--(+)--    |   / \_/   |  /  | / |  /         "
-echo "   |      (\__/\_/ \__/|_/   |/\/|_/\__/      "
+echo -e "   |     \_|)   _   _ _|_  ,_   _,   _        "
+echo -e "--(+)--    |   / \_/   |  /  | / |  /         "
+echo -e "   |      (\__/\_/ \__/|_/   |/\/|_/\__/      "
 echo
 echo -e "\e[46m       PENTAGONE GROUP - LOCTRAC SOFTWARE     \e[0m"
 echo
