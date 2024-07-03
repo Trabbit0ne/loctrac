@@ -4,6 +4,9 @@
 LOCTRACs Softwares are programs developed by PENTAGONE GROUP 
 and created in goal to provide advanced location tracking software.
 
+![image](https://github.com/PENTAGONE-GROUP/loctrac/assets/142556460/64b4aa06-401d-4c84-ba44-d9c7d4bda115)
+
+
 ## PENTAGONE GROUP
 software developement institut.
 
