@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #----------------------------------------
-#     .:: Made By Pentagone Group ::.
+#     .:: Made by Pentagone Group ::.
 #----------------------------------------
-# Date - 2024.06.01
+#          Date - 2024.06.01
 #----------------------------------------
 #     Location Tracking Software
 #----------------------------------------
@@ -92,10 +92,18 @@ perform_deeper_analysis() {
 
 # Check if the IP address is provided
 if [ "$#" -lt 1 ]; then
-    echo "Usage: loctrac <ip> or loctrac -m"
+    echo "        .:: Loctrac Program Usage ::.        "
+    echo "---------------------------------------------"
     echo "Options:"
-    echo "  -m        : Track your own public IP"
-    echo "  -h        : Show help and usage information"
+    echo "  [-m] | Track your own public IP"
+    echo "  [-h] | Show help and usage information"
+    echo "  [-v] | Show current version of the program"
+    echo
+    echo "---------------------------------------------"
+    echo "Examples:"
+    echo "  [1. loctrac -m ]"
+    echo "  [2. loctrac -h | loctrac ]"
+    echo "  [3. loctrac -v ]"
     echo
     exit 1
 fi
@@ -104,16 +112,34 @@ fi
 perform_deeper=""
 ip=""
 
-while getopts ":mh" option; do
+while getopts ":mhv" option; do
     case $option in
         m)
             ip=$(get_public_ip)
             ;;
-        h | *)
-            echo "Usage: loctrac <ip> or loctrac -m"
-            echo "Options:"
-            echo "  -m        : Track your own public IP"
-            echo "  -h        : Show help and usage information"
+        h)
+	    echo "        .:: Loctrac Program Usage ::.        "
+	    echo "---------------------------------------------"
+	    echo "Options:"
+	    echo "  [-m] | Track your own public IP"
+	    echo "  [-h] | Show help and usage information"
+	    echo "  [-v] | Show current version of the program"
+	    echo
+	    echo "---------------------------------------------"
+	    echo "Examples:"
+	    echo "  [1. loctrac -m ]"
+	    echo "  [2. loctrac -h | loctrac ]"
+	    echo "  [3. loctrac -v ]"
+	    echo
+	    exit 1
+            ;;
+        v)
+            version="1.6"
+            echo -e "\e[36mINFO\e[0m Version: $version"
+            exit 1
+            ;;
+        *)
+            echo "Invalid option: -$OPTARG" >&2
             exit 1
             ;;
     esac
@@ -174,8 +200,8 @@ cat <<EOF > $filename
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(map);
-        L.marker([$latitude, $longitude], { color: 'red' }).addTo(map);
-        L.circle([$latitude, $longitude], { color: 'red', radius: 500 }).addTo(map);
+        L.marker([$latitude, $longitude], { color: 'blue' }).addTo(map);
+        L.circle([$latitude, $longitude], { color: 'blue', radius: 500 }).addTo(map);
     </script>
 </body>
 </html>
@@ -226,6 +252,7 @@ if [ -n "$TERMINAL_WINDOW_ID" ]; then
     xdotool windowsize "$TERMINAL_WINDOW_ID" "$HALF_SCREEN_WIDTH" "$SCREEN_HEIGHT"
 fi
 
+# Check if Firefox window is active else return error
 if [ -n "$FIREFOX_WINDOW_ID" ]; then
     xdotool windowmove "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" 0
     xdotool windowsize "$FIREFOX_WINDOW_ID" "$HALF_SCREEN_WIDTH" "$SCREEN_HEIGHT"
@@ -235,29 +262,45 @@ fi
 
 # Display IP location information
 clear
-echo "PENTAGONE GROUP - LOCTRAC SOFTWARE"
-echo "[+] IP Address   => $ip"
-echo "[+] Country      => $(echo "$location_ipapi" | jq -r '.country')"
-echo "[+] Date & Time  => $(date '+%Y-%m-%d %H:%M:%S')"
-echo "[+] Region code  => $(echo "$location_ipapi" | jq -r '.region')"
-echo "[+] Region       => $(echo "$location_ipapi" | jq -r '.regionName')"
-echo "[+] City         => $(echo "$location_ipapi" | jq -r '.city')"
-echo "[+] Zip code     => $zip_code"
-echo "[+] Time zone    => $(echo "$location_ipapi" | jq -r '.timezone')"
-echo "[+] ISP          => $(echo "$location_ipapi" | jq -r '.isp')"
-echo "[+] Organization => $(echo "$location_ipapi" | jq -r '.org')"
-echo "[+] ASN          => $(echo "$location_ipapi" | jq -r '.as')"
-echo "[+] Latitude     => $latitude"
-echo "[+] Longitude    => $longitude"
-echo "[+] Location     => $latitude,$longitude"
-echo "[+] Device Type  => $device_type"
+echo "   |     \_|)   _   _ _|_  ,_   _,   _        "
+echo "--(+)--    |   / \_/   |  /  | / |  /         "
+echo "   |      (\__/\_/ \__/|_/   |/\/|_/\__/      "
+echo
+echo -e "\e[46m       PENTAGONE GROUP - LOCTRAC SOFTWARE     \e[0m"
+echo
+echo -e "\e[36mINFO\e[0m [+] IP Address   => $ip    "
+echo -e "\e[36mINFO\e[0m [+] Country      => $(echo "$location_ipapi" | jq -r '.country')"
+echo -e "\e[36mINFO\e[0m [+] Date & Time  => $(date '+%Y-%m-%d %H:%M:%S')"
+echo -e "\e[36mINFO\e[0m [+] Region code  => $(echo "$location_ipapi" | jq -r '.region')"
+echo -e "\e[36mINFO\e[0m [+] Region       => $(echo "$location_ipapi" | jq -r '.regionName')"
+echo -e "\e[36mINFO\e[0m [+] City         => $(echo "$location_ipapi" | jq -r '.city')"
+echo -e "\e[36mINFO\e[0m [+] Zip code     => $zip_code"
+echo -e "\e[36mINFO\e[0m [+] Time zone    => $(echo "$location_ipapi" | jq -r '.timezone')"
+echo -e "\e[36mINFO\e[0m [+] ISP          => $(echo "$location_ipapi" | jq -r '.isp')"
+echo -e "\e[36mINFO\e[0m [+] Organization => $(echo "$location_ipapi" | jq -r '.org')"
+echo -e "\e[36mINFO\e[0m [+] ASN          => $(echo "$location_ipapi" | jq -r '.as')"
+echo -e "\e[36mINFO\e[0m [+] Latitude     => $latitude"
+echo -e "\e[36mINFO\e[0m [+] Longitude    => $longitude"
+echo -e "\e[36mINFO\e[0m [+] Location     => $latitude,$longitude"
+echo -e "\e[36mINFO\e[0m [+] Device Type  => $device_type"
 echo
 read -p "Press Enter To Continue & Exit The Map GUI/UI..."
 clear
-kill_firefox
-clear
-echo "Session $ip Terminated."
-sleep 1
-clear
-exit 0
 
+# Kill all Firefox processes that are running
+kill_firefox
+
+# Clear the terminal screen
+clear
+
+# Print backup information
+echo -e "\e[36mINFO\e[0m Backup Saved At /etc/loctrac/saves/."
+echo -e "\e[36mINFO\e[0m Backup Saved As Html"
+echo -e "\e[36mINFO\e[0m -- ALL SAVED -- "
+sleep 2.5
+
+# Clear the terminal screen
+clear
+
+# Exit the terminal
+exit 0
